@@ -9,7 +9,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const role = localStorage.getItem('role');
-    setActiveModule(role === 'Admin' ? 'product' : 'bom');
+    setActiveModule(role === 'Admin' ? 'products' : 'bom');
   }, []);
 
   return (

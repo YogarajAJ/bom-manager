@@ -1,78 +1,121 @@
-
 'use client';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
-  Button,
   Typography,
+  Button,
   Table,
-  TableHead,
   TableBody,
-  TableRow,
   TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  AppBar,
+  Toolbar,
+  IconButton,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { fetchAllItems, deleteItem } from '@/services/api.factory';
+import LogoutIcon from '@mui/icons-material/Logout';
 import AddEditDialog from './AddEditDialog';
+import { fetchAllItems, deleteItem } from '@/services/api.factory';
+import { useRouter } from 'next/navigation';
 
 interface Props {
   module: string;
 }
 
 const TableView: React.FC<Props> = ({ module }) => {
-  const [data, setData] = useState<any[]>([]);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [rows, setRows] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
   const [editItem, setEditItem] = useState<any | null>(null);
+  const [userName, setUserName] = useState('');
+  const router = useRouter();
 
   const loadData = async () => {
-    try {
-      const result = await fetchAllItems(module.toLowerCase());
-      setData(result);
-    } catch (err) {
-      console.error('Load error', err);
-    }
+    const data = await fetchAllItems(module);
+    setRows(data);
   };
 
   useEffect(() => {
-    loadData();
+    if (module) loadData();
+    const storedName = localStorage.getItem('username') || 'User';
+    setUserName(storedName);
   }, [module]);
+
+  const handleDelete = async (id: string) => {
+    await deleteItem(module, id);
+    loadData();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('username');
+    router.replace('/login');
+  };
+
+  const headers = rows[0] ? Object.keys(rows[0]).filter(k => k !== '__v' && k !== 'id') : [];
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" mb={2}>
-        <Typography variant="h6">{module} Management</Typography>
-        <Button variant="contained" onClick={() => setOpenDialog(true)}>
-          Add {module}
+      {/* Top App Bar with Welcome + Logout */}
+      <AppBar position="static" color="inherit" elevation={1} sx={{ mb: 2 }}>
+        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Typography
+            variant="subtitle1"
+            fontWeight={600}
+            color="primary"
+            sx={{ fontSize: '1rem' }}
+          >
+            👋 Welcome, <span style={{ color: '#1976d2' }}>{userName}</span>
+          </Typography>
+          <IconButton color="error" onClick={handleLogout}>
+            <LogoutIcon />
+          </IconButton>
+        </Toolbar>
+      </AppBar>
+
+      {/* Page Title and Add Button */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6" fontWeight={600} textTransform="capitalize">
+          {module.replace('-', ' ')} Management
+        </Typography>
+        <Button variant="contained" onClick={() => { setEditItem(null); setOpen(true); }}>
+          Add {module.toUpperCase()}
         </Button>
       </Box>
 
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            {Object.keys(data?.[0] || {}).map((key) => (
-              <TableCell key={key}>{key}</TableCell>
-            ))}
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {data.map((row) => (
-            <TableRow key={row.id}>
-              {Object.values(row).map((val, idx) => (
-                <TableCell key={idx}>{val}</TableCell>
+      {/* Data Table */}
+      <TableContainer component={Paper} elevation={2}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {headers.map((h) => (
+                <TableCell key={h} sx={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{h}</TableCell>
               ))}
-              <TableCell>
-                <Button size="small" onClick={() => { setEditItem(row); setOpenDialog(true); }}>Edit</Button>
-                <Button size="small" color="error" onClick={async () => { await deleteItem(module.toLowerCase(), row.id); loadData(); }}>Delete</Button>
-              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.id} hover>
+                {headers.map((h) => (
+                  <TableCell key={h}>{row[h]}</TableCell>
+                ))}
+                <TableCell>
+                  <Button size="small" onClick={() => { setEditItem(row); setOpen(true); }}>Edit</Button>
+                  <Button size="small" color="error" onClick={() => handleDelete(row.id)}>Delete</Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
+      {/* Add/Edit Dialog */}
       <AddEditDialog
-        open={openDialog}
-        onClose={() => { setOpenDialog(false); setEditItem(null); loadData(); }}
+        open={open}
+        onClose={() => { setOpen(false); loadData(); }}
         module={module}
         editItem={editItem}
       />

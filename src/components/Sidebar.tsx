@@ -7,6 +7,7 @@ import {
   ListItemButton,
   ListItemText,
   Toolbar,
+  Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { menuOptions } from '@/constants/moduleFields';
@@ -34,15 +35,38 @@ const Sidebar: React.FC<Props> = ({ selected, onSelect }) => {
       sx={{
         width: drawerWidth,
         flexShrink: 0,
-        [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+        [`& .MuiDrawer-paper`]: {
+          width: drawerWidth,
+          boxSizing: 'border-box',
+          bgcolor: '#f9f9f9',
+          borderRight: '1px solid #e0e0e0',
+        },
       }}
     >
-      <Toolbar />
+      <Toolbar>
+        <Typography variant="h6" fontWeight={600}>BOM Manager</Typography>
+      </Toolbar>
       <List>
         {menuItems.map((item) => (
           <ListItem key={item} disablePadding>
-            <ListItemButton selected={item === selected} onClick={() => onSelect(item)}>
-              <ListItemText primary={item.replace('-', ' ').toUpperCase()} />
+            <ListItemButton
+              selected={item === selected}
+              onClick={() => onSelect(item)}
+              sx={{
+                '&.Mui-selected': {
+                  bgcolor: '#e3f2fd',
+                  color: '#1976d2',
+                  fontWeight: 'bold',
+                },
+                '&:hover': {
+                  bgcolor: '#f1f1f1',
+                },
+              }}
+            >
+              <ListItemText
+                primary={item.replace('-', ' ').toUpperCase()}
+                primaryTypographyProps={{ fontSize: 14, fontWeight: 500 }}
+              />
             </ListItemButton>
           </ListItem>
         ))}
