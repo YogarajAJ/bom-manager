@@ -54,7 +54,31 @@ const TableView: React.FC<Props> = ({ module }) => {
     router.replace('/login');
   };
 
-  const headers = rows[0] ? Object.keys(rows[0]).filter(k => k !== '__v' && k !== 'id') : [];
+  const headers = rows[0]
+    ? Object.keys(rows[0]).filter(
+      (k) =>
+        !['__v', 'id', 'bomId', 'materialId', 'unitId', 'supplierId', 'productId'].includes(k)
+    )
+    : [];
+
+  const formatHeader = (key: string) => {
+    switch (key) {
+      case 'bom':
+        return 'BOM Name';
+      case 'material':
+        return 'Material';
+      case 'unit':
+        return 'Unit';
+      case 'supplier':
+        return 'Supplier';
+      case 'referenceCode':
+        return 'Reference Code';
+      case 'product':
+        return 'Product Name';
+      default:
+        return key.charAt(0).toUpperCase() + key.slice(1);
+    }
+  };
 
   return (
     <Box>
@@ -91,7 +115,9 @@ const TableView: React.FC<Props> = ({ module }) => {
           <TableHead>
             <TableRow>
               {headers.map((h) => (
-                <TableCell key={h} sx={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{h}</TableCell>
+                <TableCell key={h} sx={{ fontWeight: 'bold' }}>
+                  {formatHeader(h)}
+                </TableCell>
               ))}
               <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
@@ -100,11 +126,37 @@ const TableView: React.FC<Props> = ({ module }) => {
             {rows.map((row) => (
               <TableRow key={row.id} hover>
                 {headers.map((h) => (
-                  <TableCell key={h}>{row[h]}</TableCell>
+                  <TableCell key={h}>
+                    {(() => {
+                      const val = row[h];
+                      if (typeof val === 'object' && val !== null) {
+                        return val.name || val.code || '[object]';
+                      }
+
+                      // Try to parse as a date
+                      const isDate = typeof val === 'string' && !isNaN(Date.parse(val));
+                      if (isDate) {
+                        return new Date(val).toLocaleString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        });
+                      }
+
+                      return val;
+                    })()}
+                  </TableCell>
+
                 ))}
                 <TableCell>
-                  <Button size="small" onClick={() => { setEditItem(row); setOpen(true); }}>Edit</Button>
-                  <Button size="small" color="error" onClick={() => handleDelete(row.id)}>Delete</Button>
+                  <Button size="small" onClick={() => { setEditItem(row); setOpen(true); }}>
+                    Edit
+                  </Button>
+                  <Button size="small" color="error" onClick={() => handleDelete(row.id)}>
+                    Delete
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
