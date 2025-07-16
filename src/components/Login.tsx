@@ -38,7 +38,14 @@ const Login: React.FC = () => {
       localStorage.setItem('role', data.user.role);
 
       // Redirect based on role or just go to landing page
-      router.push('/dashboard');
+      if (data.user.role === 'Admin') {
+        router.push('/admin');
+      } else if (data.user.role === 'Designer') {
+        router.push('/designer');
+      } else {
+        router.push('/login'); // fallback for unknown roles
+      }
+      
     } catch (err: any) {
       setErrorMessage(err?.response?.data?.message || 'Login failed');
       setTimeout(() => setErrorMessage(null), 4000);
